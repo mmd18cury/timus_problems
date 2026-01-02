@@ -1,0 +1,248 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <stdlib.h>  
+using namespace std;
+int mycount(vector <vector<int>> &cards, pair <int, int> el) {
+	int kol = 0;
+	for (int i = 0; i < cards[0].size(); i++) {
+		if (cards[0][i] == el.first && cards[1][i] == el.second)
+			kol++;
+	}
+	return kol;
+}
+pair <int, int> readcard(string & s) {
+	pair <int, int> cardi;
+	int i;
+	if (s.back() == 'S') { i = 0; }
+	else if (s.back() == 'C') { i = 1; }
+	else if (s.back() == 'D') { i = 2; }
+	else if (s.back() == 'H') { i = 3; }
+	cardi.second = i;
+
+	int vol;
+	if (s.size()==3){
+		string subs(s, 0, 2);
+		string::size_type sz;
+		vol = stoi(subs, &sz);
+	}
+	else if (s[0] == 'J') {
+		vol = 11;
+	}
+	else if (s[0] == 'Q') {
+		vol = 12;
+	}
+	else if (s[0] == 'K') {
+		vol = 13;
+	}
+	else if (s[0] == 'A') {
+		vol = 14;
+	}
+	else {
+		vol = s[0] - '0';
+	}
+	cardi.first = vol;
+
+	return cardi;
+}
+int strtf(vector <vector <int>> &cards, int i) {
+	int raw = 1;
+	for (int i2 = 0; i2 < cards[0].size(); i2++) {
+		if (i2 == i&&i2 < cards[0].size() - 1)
+			i2++;
+		else if (i2 == i && i2 == cards[0].size() - 1)
+			break;
+		if (cards[0][i] - cards[0][i2] == 1 && cards[1][i] == cards[1][i2]) {
+			raw += strtf(cards, i2);
+			break;
+		}
+	}
+	return raw;
+}
+int strt(vector <vector <int>> &cards, int i) {
+	int raw = 1;
+	for (int i2 = 0; i2 < cards[0].size(); i2++) {
+		if (i2 == i && i2 < cards[0].size() - 1)
+			i2++;
+		else if (i2 == i && i2 == cards[0].size() - 1)
+			break;
+		if (cards[0][i] - cards[0][i2] == 1) {
+			raw += strt(cards, i2);
+			break;
+		}
+	}
+	return raw;
+}
+pair <int, int> cmbs(vector <vector <int>> & cards){
+	int comb = 0;
+	if (count(cards[0].begin(), cards[0].end(), 3) == 3) {
+		comb = 6;
+		return make_pair(comb, -1);
+	}
+	int MAX5 = 0, maxi;
+	for (int i = 0; i < cards[0].size(); i++) {
+		int strl = strtf(cards, i);
+		if (strl > MAX5) {
+			MAX5 = strl;
+			maxi = i;
+		}
+	}
+	if (MAX5 >= 3) {
+		int topofstrf = cards[0][maxi];
+		comb = 5;
+		return make_pair(comb, topofstrf);
+	}
+	for (int i = 0; i < cards[0].size(); i++) {
+		if (count(cards[0].begin(), cards[0].end(), cards[0][i]) >= 3) {
+			comb = 4;
+			return make_pair(comb, cards[0][i]);
+		}
+	}
+	int MAX3 = 0, maxi2;
+	for (int i = 0; i < cards[0].size(); i++) {
+		int strl = strt(cards, i);
+		if (strl > MAX3) {
+			MAX3 = strl;
+			maxi2 = i;
+		}
+	}
+	if (MAX3 >= 3) {
+		int topofstr = cards[0][maxi2];
+		comb = 3;
+		return make_pair(comb, topofstr);
+	}
+	for (int i = 0; i < cards[1].size(); i++) {
+		if (count(cards[1].begin(), cards[1].end(), cards[1][i]) >= 3) {
+			comb = 2;
+			return make_pair(comb, -1);
+		}
+	}
+	int MAX1 = 0;
+	for (int i = 0; i < cards[0].size(); i++) {
+		int c = count(cards[0].begin(), cards[0].end(), cards[0][i]);
+		if (c == 2 && cards[0][i] > MAX1 ) {
+			comb = 1;
+			MAX1 = cards[0][i];
+		}
+	}
+	if (comb == 1)
+		return make_pair(comb, MAX1);
+	return make_pair(comb, -1);
+}
+int older(vector <vector <int>> &one, vector <vector <int>> &sec, int comb, int topS, int topD) {
+	if (comb == 2) {
+		for (int i = 0; i <sec[1].size(); i++) {
+			if (count(sec[1].begin(), sec[1].end(), sec[1][i]) < 3) {
+				sec[0].erase(sec[0].begin() + i);
+				sec[1].erase(sec[1].begin() + i);
+				i--;
+			}
+		}
+		for (int i = 0; i <3; i++) {
+			auto ito = max_element(one[0].begin(), one[0].end()), its = max_element(sec[0].begin(), sec[0].end());
+			int maxo = *ito, maxs = *its;
+			if (maxo > maxs)
+				return 1;
+			else if (maxs > maxo)
+				return 2;
+			else {
+				one[0].erase(ito);
+				sec[0].erase(its);
+			}
+		}
+		if (one[0].size() == 0)
+			return 0;
+	}
+	else if (comb == 1) {
+		for (int i = 0; i <one[0].size(); i++) {
+			if (one[0][i] == topS) {
+				one[0].erase(one[0].begin() + i);
+				one[1].erase(one[1].begin() + i);
+				i--;
+			}
+		}
+		for (int i = 0; i <sec[0].size(); i++) {
+			if (sec[0][i] == topD) {
+				sec[0].erase(sec[0].begin() + i);
+				sec[1].erase(sec[1].begin() + i);
+				i--;
+			}
+		}
+		while (one[0].size() > 0) {
+			auto ito = max_element(one[0].begin(), one[0].end()); auto its = max_element(sec[0].begin(), sec[0].end());
+			int maxo = *ito, maxs = *its;
+			if (maxo > maxs)
+				return 1;
+			else if (maxs > maxo)
+				return 2;
+			else {
+				one[0].erase(ito);
+				sec[0].erase(its);
+			}
+		}
+		if (one[0].size() == 0)
+			return 0;
+	}
+	else if (comb == 0) {
+		while (one[0].size() > 0) {
+			auto ito = max_element(one[0].begin(), one[0].end()), its = max_element(sec[0].begin(), sec[0].end());
+			int maxo = *ito, maxs = *its;
+			if (maxo > maxs)
+				return 1;
+			else if (maxs > maxo)
+				return 2;
+			else {
+				one[0].erase(ito);
+				sec[0].erase(its);
+			}
+			if (one[0].size() == 0)
+				return 0;
+		}
+	}
+	return 0;
+}
+int main() {
+	while (!cin.eof()) {
+		string card;
+		vector <vector <int>> Sasha(2, vector <int>(3)); vector <vector <int>> Dima(2);
+		for (int i = 0; i < 3; i++) {
+			if (!(cin >> card)) return 0;
+			pair <int, int> cardi = readcard(card);
+			Sasha[0][i] = cardi.first;
+			Sasha[1][i] = cardi.second;
+		}
+		for (int i = 0; i < 5; i++) {
+			if (!(cin >> card)) return 0;
+			pair <int, int> cardi = readcard(card);
+			int mcS = mycount(Sasha, cardi), mcD = mycount(Dima, cardi);
+			if (mcS == 0 && mcD == 0) {
+				Dima[0].push_back(cardi.first);
+				Dima[1].push_back(cardi.second);
+			}
+		}
+		pair <int, int> pS = cmbs(Sasha); pair <int, int> pD = cmbs(Dima);
+		int SashaC = pS.first; int DimaC = pD.first, topS = pS.second, topD = pD.second;
+		if (SashaC > DimaC) {
+			cout << "Sasha" << '\n';
+		}
+		else if (SashaC == DimaC) {
+			if (topS > topD)
+				cout << "Sasha" << '\n';
+			else if (topS < topD)
+				cout << "Dima" << '\n';
+			else
+			{
+				int OLD = older(Sasha, Dima, SashaC, topS, topD);
+				if (OLD == 1)
+					cout << "Sasha" << '\n';
+				else if (OLD == 2)
+					cout << "Dima" << '\n';
+				else
+					cout << "Artyom" << '\n';
+			}
+		}
+		else if (SashaC < DimaC)
+			cout << "Dima" << '\n';
+	}
+}
